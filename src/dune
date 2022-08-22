@@ -1,0 +1,16 @@
+(library
+ (name lib)
+ (preprocess
+  (pps ppx_deriving.show))
+ (modules fc_queue flat_combiner)
+ (libraries fmt))
+
+(env
+ (dev
+  (flags
+   (:standard -w -27-69-37-32))))
+
+(executable
+ (name main)
+ (libraries lib)
+ (modules main))

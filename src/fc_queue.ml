@@ -1,3 +1,5 @@
+open! Logs
+
 module type Content = sig
   type t
 
@@ -7,6 +9,7 @@ end
 module PublicationRecord (T : Content) = struct
   type elt = T.t
 
+  (* Instead of opcode, consider using a thunk *)
   type opcode =
     | Enq
     | Deq
@@ -59,7 +62,7 @@ module PublicationRecord (T : Content) = struct
   ;;
 
   let pp pub =
-    Printf.printf
+    Printf.sprintf
       {|
       {
         opcode : %s;
@@ -106,42 +109,44 @@ module FC_queue (T : Content) = struct
   let contend t : bool = true
 
   let scan_combine_apply t =
-    Printf.printf "Start Scan_Combine_Apply\n";
+    Logs.info (fun m -> m "Start Scan_Combine_Apply");
     let execute pub =
       if PR.pending !pub
       then (
         match !pub.opcode with
         | Enq ->
           let param = PR.param !pub in
-          Printf.printf "Enqueuing\n";
+          Logs.info (fun m -> m "Enqueuing");
           Queue.push param t.queue;
           PR.result_available !pub
         | Deq ->
-          Printf.printf "Dequeuing\n";
+          Logs.info (fun m -> m "Dequeuing");
           let res = Queue.pop t.queue in
           PR.install_result res pub)
     in
     let s =
       List.fold_left (fun acc pr -> Seq.append acc (PR.t_to_seq pr)) Seq.empty t.pub_list
     in
-    Seq.iter
-      (fun p ->
-        PR.pp !p;
-        execute p)
-      s;
-    Printf.printf "End Scan_Combine_Apply\n"
+    Seq.iter (fun p -> execute p) s;
+    Logs.info (fun m -> m "End Scan_Combine_Apply")
   ;;
 
   let traverse_publist t =
     let s =
       List.fold_left (fun acc pr -> Seq.append acc (PR.t_to_seq pr)) Seq.empty t.pub_list
     in
-    Seq.iter (fun p -> PR.pp !p) s
+    Seq.iter (fun p -> Logs.debug (fun m -> m "%a" Format.pp_print_string (PR.pp !p))) s
   ;;
 
-  let print_queue t =
-    t.queue |> Queue.to_seq |> Seq.iter (fun v -> Printf.printf "%s\n" (T.to_string v))
+  let log_queue t =
+    t.queue
+    |> Queue.to_seq
+    |> Seq.iter (fun v ->
+         Logs.debug (fun m -> m "%a" Format.pp_print_string (T.to_string v)))
   ;;
+
+  (* let res = T.to_string v in
+           m res)) *)
 
   let enqueue t v =
     (* let id = Thread.id in *)

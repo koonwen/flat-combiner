@@ -12,5 +12,5 @@ module FC_queue (T : Content) : sig
   val enqueue : t -> elt -> unit
   val dequeue : t -> elt
   val traverse_publist : t -> unit
-  val print_queue : t -> unit
+  val log_queue : t -> unit
 end

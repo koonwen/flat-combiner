@@ -1,4 +1,4 @@
-open Core
+(* open Core
 open Core_bench
 
 let seq_Q = Queue.create ()
@@ -25,4 +25,4 @@ let test () =
 let _ =
   Command_unix.run
     (Bench.make_command [ Bench.Test.create ~name:"Sequential Queue" test ])
-;;
+;; *)

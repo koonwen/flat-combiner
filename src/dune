@@ -3,7 +3,7 @@
  (preprocess
   (pps ppx_deriving.show))
  (modules fc_queue flat_combiner)
- (libraries fmt))
+ (libraries fmt logs))
 
 (env
  (dev
@@ -12,5 +12,5 @@
 
 (executable
  (name main)
- (libraries lib)
+ (libraries lib logs cmdliner fmt logs.fmt logs.cli fmt.cli fmt.tty)
  (modules main))

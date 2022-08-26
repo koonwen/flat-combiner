@@ -1,9 +1,9 @@
-(test
- (name test_fc_queue)
- (modules test_fc_queue)
- (libraries lib core core_bench core_unix.command_unix))
+; (test
+;  (name test_fc_queue)
+;  (modules test_fc_queue)
+;  (libraries lib core core_bench core_unix.command_unix))
 
-(executable
- (name logging)
- (modules logging)
- (libraries logs cmdliner fmt logs.fmt logs.cli fmt.cli fmt.tty))
+; (executable
+;  (name logging)
+;  (modules logging)
+;  (libraries logs cmdliner fmt logs.fmt logs.cli fmt.cli fmt.tty))

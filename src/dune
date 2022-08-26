@@ -1,16 +1,34 @@
-(library
- (name lib)
- (preprocess
-  (pps ppx_deriving.show))
- (modules fc_queue flat_combiner)
- (libraries fmt logs))
+; (library
+;  (name lib)
+;  ;  (preprocess
+;  ;   (pps ppx_deriving.show))
+;  (modules fc_queue flat_combiner)
+;  (libraries fmt logs domainslib))
 
 (env
  (dev
   (flags
    (:standard -w -27-69-37-32))))
 
-(executable
- (name main)
- (libraries lib logs cmdliner fmt logs.fmt logs.cli fmt.cli fmt.tty)
- (modules main))
+(library
+ (name fc_generic_domains)
+ (modules fc_generic_domains))
+
+(library
+ (name fc_generic_threads)
+ (libraries threads)
+ (modules fc_generic_threads))
+
+(executables
+ (names main fcq_threads fcq_domains)
+ (libraries
+  fc_generic_domains
+  fc_generic_threads
+  logs
+  cmdliner
+  fmt
+  logs.fmt
+  logs.cli
+  fmt.cli
+  fmt.tty)
+ (modules main fcq_threads fcq_domains))

@@ -30,3 +30,6 @@ _opam/
 
 # VS Code settings
 .vscode
+
+# Test bed
+playground/

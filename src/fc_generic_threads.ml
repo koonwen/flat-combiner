@@ -57,9 +57,9 @@ let apply t request =
   then (
     t.pub_list <- pr :: t.pub_list;
     pr.active <- true);
-  pr.pending <- true;
   pr.result <- None;
   pr.request <- request;
+  pr.pending <- true;
   scan_combine_apply t pr
 ;;
 

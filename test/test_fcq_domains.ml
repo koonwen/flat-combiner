@@ -1,3 +1,16 @@
+let check_elements n seq =
+  let rec aux acc = function
+    | Seq.Nil -> true
+    | Seq.Cons (hd, t) ->
+      if 1 <= hd && hd <= n && not (List.mem hd acc)
+      then aux (hd :: acc) (t ())
+      else (
+        Printf.printf "(%d)" hd;
+        false)
+  in
+  aux [] (seq ())
+;;
+
 let check_order n seq =
   let l, r = 1, n / 2 in
   let rec aux l r = function
@@ -10,17 +23,6 @@ let check_order n seq =
       else false
   in
   aux l r (seq ())
-;;
-
-let check_elements n seq =
-  let rec aux acc = function
-    | Seq.Nil -> true
-    | Seq.Cons (hd, t) ->
-      if 1 <= hd && hd <= n && not (List.mem hd acc)
-      then aux (hd :: acc) (t ())
-      else false
-  in
-  aux [] (seq ())
 ;;
 
 let test_sequential_consistency n =
@@ -40,4 +42,4 @@ let test_sequential_consistency n =
   assert (FC_Queue._q |> Queue.to_seq |> check_order n)
 ;;
 
-let () = test_sequential_consistency 100000
+let () = test_sequential_consistency 10000

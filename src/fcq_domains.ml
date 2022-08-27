@@ -12,40 +12,48 @@ module FC_Queue = struct
     | _ -> failwith "Enq Impossible"
   ;;
 
-  let deq () =
-    Fc_generic_domains.apply _fcq (fun () ->
-      try Queue.pop _q |> Option.some with
-      | _ -> None)
-  ;;
+  let deq () = Fc_generic_domains.apply _fcq (fun () -> Queue.take_opt _q)
 end
 
-let rec enqueuer i =
-  if i > 0
+let rec enqueuer lo hi =
+  if lo <= hi
   then (
-    let _id = Thread.self () |> Thread.id in
-    FC_Queue.enq i;
-    enqueuer (i - 1))
+    let _id = Domain.self () in
+    FC_Queue.enq lo;
+    enqueuer (lo + 1) hi)
   else ()
 ;;
 
-let dequeuer i =
+let dequeuer n =
   let acc = ref [] in
-  let rec aux i =
-    if i > 0
+  let rec aux n =
+    if n > 0
     then (
       (match FC_Queue.deq () with
        | Some v -> acc := v :: !acc
        | None -> ());
-      aux (i - 1))
+      aux (n - 1))
     else ()
   in
-  aux i;
+  aux n;
   !acc
 ;;
 
-let () =
+(* let () =
   let t1 = Domain.spawn (fun () -> enqueuer 100_000) in
   let t2 = Domain.spawn (fun () -> dequeuer 100_000) in
   Domain.join t1;
   Domain.join t2 |> List.length |> print_int
+;; *)
+
+(* let test_sequential_consistency n =
+  let mid = n / 2 in
+  let e1 = Domain.spawn (fun () -> enqueuer 1 mid) in
+  let e2 = Domain.spawn (fun () -> enqueuer (mid + 1) n) in
+  Domain.join e1;
+  Domain.join e2;
+  (* FC_Queue._q |> Queue.length |> print_int; *)
+  FC_Queue._q |> Queue.iter (Printf.printf "%d ")
 ;;
+
+let () = test_sequential_consistency 10000 *)

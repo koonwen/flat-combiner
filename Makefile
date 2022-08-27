@@ -2,11 +2,20 @@
 build:
 	dune build -w --terminal-persistence=clear-on-rebuild
 
-exec:
+main:
 	dune exec -- ./src/main.exe
 
-info:
+main_info:
 	dune exec -- ./src/main.exe -v
 
-debug:
+main_debug:
 	dune exec -- ./src/main.exe -vv
+
+# fcqt:
+# 	dune exec -- ./src/fcq_threads.exe
+
+# fcqd:
+# 	dune exec -- ./src/fcq_domains.exe
+
+test:
+	dune test

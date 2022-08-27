@@ -34,9 +34,11 @@ let rec scan_combine_apply t pr =
   then (
     List.iter
       (fun pr ->
-        pr.result <- pr.request ();
-        pr.age <- pr.age + 1;
-        pr.pending <- false)
+        if pr.pending
+        then (
+          pr.result <- pr.request ();
+          pr.age <- pr.age + 1;
+          pr.pending <- false))
       t.pub_list;
     Mutex.unlock t.global_lock;
     pr.result)

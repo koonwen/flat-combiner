@@ -1,7 +1,14 @@
-; (test
-;  (name test_fc_queue)
-;  (modules test_fc_queue)
-;  (libraries lib core core_bench core_unix.command_unix))
+(test
+ (name test_fcq_threads)
+ (modules test_fcq_threads)
+ (libraries fcq_threads))
+
+(test
+ (name test_fcq_domains)
+ (modules test_fcq_domains)
+ (libraries fcq_domains))
+
+; (libraries lib core core_bench core_unix.command_unix))
 
 ; (executable
 ;  (name logging)

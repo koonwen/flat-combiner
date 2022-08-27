@@ -19,16 +19,39 @@
  (libraries threads)
  (modules fc_generic_threads))
 
-(executables
- (names main fcq_threads fcq_domains)
- (libraries
-  fc_generic_domains
-  fc_generic_threads
-  logs
-  cmdliner
-  fmt
-  logs.fmt
-  logs.cli
-  fmt.cli
-  fmt.tty)
- (modules main fcq_threads fcq_domains))
+(library
+ (name fcq_threads)
+ (libraries fc_generic_threads)
+ (modules fcq_threads))
+
+(library
+ (name fcq_domains)
+ (libraries fc_generic_domains)
+ (modules fcq_domains))
+
+; (executables
+;  (names main fcq_threads fcq_domains)
+;  (libraries
+;   fc_generic_domains
+;   fc_generic_threads
+;   logs
+;   cmdliner
+;   fmt
+;   logs.fmt
+;   logs.cli
+;   fmt.cli
+;   fmt.tty)
+;  (modules main fcq_threads fcq_domains))
+
+; (executables
+;  (names main fcq_domains)
+;  (libraries
+;   fc_generic_domains
+;   logs
+;   cmdliner
+;   fmt
+;   logs.fmt
+;   logs.cli
+;   fmt.cli
+;   fmt.tty)
+;  (modules main fcq_domains))

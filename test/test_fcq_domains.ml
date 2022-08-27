@@ -1,14 +1,13 @@
 let check_elements n seq =
-  let rec aux acc = function
+  let module IntSet = Set.Make (Int) in
+  let rec aux set = function
     | Seq.Nil -> true
     | Seq.Cons (hd, t) ->
-      if 1 <= hd && hd <= n && not (List.mem hd acc)
-      then aux (hd :: acc) (t ())
-      else (
-        Printf.printf "(%d)" hd;
-        false)
+      if 1 <= hd && hd <= n && not (IntSet.mem hd set)
+      then aux (IntSet.add hd set) (t ())
+      else false
   in
-  aux [] (seq ())
+  aux IntSet.empty (seq ())
 ;;
 
 let check_order n seq =
@@ -42,4 +41,4 @@ let test_sequential_consistency n =
   assert (FC_Queue._q |> Queue.to_seq |> check_order n)
 ;;
 
-let () = test_sequential_consistency 10000
+let () = test_sequential_consistency 1_000_000

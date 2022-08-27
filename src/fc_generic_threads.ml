@@ -11,6 +11,7 @@ type ('a, 'b) t =
   ; count : int
   ; mutable pub_list : 'a publication_record List.t
   ; mutable ds : 'b
+      (* We cannot use an array because in 4.12.0+domains+effects, the Thread ID isn't consistent in increasing order. *)
   ; thread_records : (Thread.t, 'a publication_record) Hashtbl.t
   }
 

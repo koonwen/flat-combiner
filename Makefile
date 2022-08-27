@@ -11,12 +11,6 @@ main_info:
 main_debug:
 	dune exec -- ./src/main.exe -vv
 
-# fcqt:
-# 	dune exec -- ./src/fcq_threads.exe
-
-# fcqd:
-# 	dune exec -- ./src/fcq_domains.exe
-
 .PHONY:test
 test:
 	dune test

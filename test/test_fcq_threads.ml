@@ -1,3 +1,15 @@
+let check_elements n seq =
+  let module IntSet = Set.Make (Int) in
+  let rec aux set = function
+    | Seq.Nil -> true
+    | Seq.Cons (hd, t) ->
+      if 1 <= hd && hd <= n && not (IntSet.mem hd set)
+      then aux (IntSet.add hd set) (t ())
+      else false
+  in
+  aux IntSet.empty (seq ())
+;;
+
 let check_order n seq =
   let l, r = 1, n / 2 in
   let rec aux l r = function
@@ -10,17 +22,6 @@ let check_order n seq =
       else false
   in
   aux l r (seq ())
-;;
-
-let check_elements n seq =
-  let rec aux acc = function
-    | Seq.Nil -> true
-    | Seq.Cons (hd, t) ->
-      if 1 <= hd && hd <= n && not (List.mem hd acc)
-      then aux (hd :: acc) (t ())
-      else false
-  in
-  aux [] (seq ())
 ;;
 
 let test_sequential_consistency n =
@@ -41,4 +42,4 @@ let test_sequential_consistency n =
 (* let left, right = FC_Queue._q |> Queue.to_seq |> Seq.partition (fun i -> i <= mid) in
   Seq.iter (fun v -> Printf.printf "%d " v) left *)
 
-let () = test_sequential_consistency 10_000
+let () = test_sequential_consistency 1_000_000

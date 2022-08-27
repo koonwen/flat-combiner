@@ -95,7 +95,7 @@ let prog2 () =
 ;; *)
 
 (* Analysis 
-   The problem with this implementation is that we create fresh threads every cycle instead of reusing the old threads. This is problematic because in our initialization of the FCQ, we specify the number of threads that we are going to use in the program which restricts the number of threads we can create to access the thread. We observe an index out of bounds in this implementation *)
+   The problem with this implementation is that we create fresh threads every cycle instead of reusing the old threads. This is problematic because in our initialization of the FCQ, we specify the number of threads that we are going to use in the program which restricts the number of threads we can create to access the thread. We observe an index out of bounds in this implementation (This only happens when the thread_record was implemented as an array. Now that it is a Hashtable, prog2 will work but creates a huge and inefficient thread_record and pub_list) *)
 
 (** [FC_Queue.enqueuer_v3 lo hi] enqueues the range of values from [lo] (inclusive) to [hi] (inclusive) in a concurrent fashion *)
 let rec enqueuer_v3 lo hi =

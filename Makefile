@@ -17,5 +17,6 @@ main_debug:
 # fcqd:
 # 	dune exec -- ./src/fcq_domains.exe
 
+.PHONY:test
 test:
 	dune test

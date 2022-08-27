@@ -11,7 +11,7 @@ type ('a, 'b) t =
   ; count : int
   ; mutable pub_list : 'a publication_record List.t
   ; mutable ds : 'b
-  ; thread_records : 'a publication_record Array.t
+  ; thread_records : (Thread.t, 'a publication_record) Hashtbl.t
   }
 
 let init_pub_rec () =
@@ -23,7 +23,7 @@ let create ~data_structure:ds ~num_threads =
   ; count = 0
   ; pub_list = []
   ; ds
-  ; thread_records = Array.make num_threads (init_pub_rec ())
+  ; thread_records = Hashtbl.create num_threads
   }
 ;;
 
@@ -46,13 +46,15 @@ let rec scan_combine_apply t pr =
 ;;
 
 let apply t request =
-  let id = Thread.self () |> Thread.id in
-  let pr = t.thread_records.(id) in
-  (* try Hashtbl.find t.thread_records id with
+  let id = Thread.self () in
+  let pr =
+    (* t.thread_records.(id) in *)
+    try Hashtbl.find t.thread_records id with
     | Not_found ->
       let new_pr = init_pub_rec () in
       Hashtbl.add t.thread_records id new_pr;
-      new_pr *)
+      new_pr
+  in
   if not pr.active
   then (
     t.pub_list <- pr :: t.pub_list;

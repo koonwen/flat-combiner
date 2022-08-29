@@ -13,7 +13,14 @@ main_debug:
 
 .PHONY:test
 test:
-	dune test
+	dune exec -- test/main.exe
+.PHONY:testq
+testq:
+	dune exec -- test/main.exe -q
+
+.PHONY:speedtest
+speedtest:
+	dune exec -- test/speedtest.exe
 
 clean:
 	dune clean

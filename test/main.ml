@@ -1,42 +1,52 @@
 (* Build with `ocamlbuild -pkg alcotest simple.byte` *)
 
-(* A module with functions to test *)
-module To_test = struct
-  let lowercase = String.lowercase_ascii
-  let capitalize = String.capitalize_ascii
-  let str_concat = String.concat ""
-  let list_concat = List.append
-end
-
 (* The tests *)
-let test_lowercase () =
-  Alcotest.(check string) "same string" "hello!" (To_test.lowercase "hELLO!")
+let test_fcq_threads_enq n () =
+  Alcotest.(check unit) "Passed" () (Test_fcq_threads.test_enq_sequential_consistency n)
 ;;
 
-let test_capitalize () =
-  Alcotest.(check string) "same string" "World." (To_test.capitalize "world.")
+let test_fcq_threads_deq n () =
+  Alcotest.(check unit) "Passed" () (Test_fcq_threads.test_deq_sequential_consistency n)
 ;;
 
-let test_str_concat () =
-  Alcotest.(check string) "same string" "foobar" (To_test.str_concat [ "foo"; "bar" ])
+let test_fcq_domains_enq n () =
+  Alcotest.(check unit) "Passed" () (Test_fcq_domains.test_enq_sequential_consistency n)
 ;;
 
-let test_list_concat () =
-  Alcotest.(check (list int))
-    "same lists"
-    [ 1; 2; 3 ]
-    (To_test.list_concat [ 1 ] [ 2; 3 ])
+let test_fcq_domains_deq n () =
+  Alcotest.(check unit) "Passed" () (Test_fcq_domains.test_deq_sequential_consistency n)
+;;
+
+let test_lock_queue_enq n () =
+  Alcotest.(check unit) "Passed" () (Test_lock_queue.test_enq_sequential_consistency n)
+;;
+
+let test_lock_queue_deq n () =
+  Alcotest.(check unit) "Passed" () (Test_lock_queue.test_deq_sequential_consistency n)
 ;;
 
 (* Run it *)
 let () =
   let open Alcotest in
   run
-    "Utils"
-    [ ( "string-case"
-      , [ test_case "Lower case" `Quick test_lowercase
-        ; test_case "Capitalization" `Quick test_capitalize
+    "FC Tests"
+    [ ( "Flat-combiner Threads Implementation"
+      , [ test_case "enq sequential consistency" `Slow (test_fcq_threads_enq 10_000_000)
+        ; test_case "deq sequential consistency" `Slow (test_fcq_threads_deq 10_000_000)
+        ; test_case "enq sequential consistency" `Quick (test_fcq_threads_enq 100_000)
+        ; test_case "deq sequential consistency" `Quick (test_fcq_threads_deq 100_000)
         ] )
-    ; "string-concat", [ test_case "String mashing" `Quick test_str_concat ]
-    ; "list-concat", [ test_case "List mashing" `Slow test_list_concat ]
-    ];;
+    ; ( "Flat-combiner Domains Implementation"
+      , [ test_case "enq sequential consistency" `Slow (test_fcq_domains_enq 10_000_000)
+        ; test_case "deq sequential consistency" `Slow (test_fcq_domains_deq 10_000_000)
+        ; test_case "enq sequential consistency" `Quick (test_fcq_domains_enq 100_000)
+        ; test_case "deq sequential consistency" `Quick (test_fcq_domains_deq 100_000)
+        ] )
+    ; ( "Coarse Lock Queue Implementation"
+      , [ test_case "enq sequential consistency" `Slow (test_lock_queue_enq 10_000_000)
+        ; test_case "deq sequential consistency" `Slow (test_lock_queue_deq 10_000_000)
+        ; test_case "enq sequential consistency" `Quick (test_lock_queue_enq 100_000)
+        ; test_case "deq sequential consistency" `Quick (test_lock_queue_deq 100_000)
+        ] )
+    ]
+;;

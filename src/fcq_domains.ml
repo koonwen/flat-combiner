@@ -1,5 +1,5 @@
 module FC_Queue = struct
-  let num_domains = 2
+  let num_domains = Domain.recommended_domain_count
   let _q = Queue.create ()
   let _fcq = Fc_generic_domains.create ~data_structure:_q ~num_domains
 

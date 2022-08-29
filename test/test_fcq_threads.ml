@@ -12,7 +12,8 @@ let test_enq_sequential_consistency n =
   (* Check that elements are consistent *)
   assert (FC_Queue._q |> Queue.to_seq |> check_elements 1 n);
   (* Check sequential consistency *)
-  assert (FC_Queue._q |> Queue.to_seq |> check_order n)
+  assert (FC_Queue._q |> Queue.to_seq |> check_order n);
+  Queue.clear FC_Queue._q
 ;;
 
 let test_deq_sequential_consistency n =
@@ -34,7 +35,7 @@ let test_deq_sequential_consistency n =
   assert (check_descending !d1_acc && check_descending !d2_acc)
 ;;
 
-let () =
+(* let () =
   test_enq_sequential_consistency 1_000_000;
   test_deq_sequential_consistency 1_000_000
-;;
+;; *)

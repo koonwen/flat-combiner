@@ -17,9 +17,24 @@
 ;  (libraries alcotest)
 ;  (modules main))
 
+(test
+ (name test_lock_queue)
+ (libraries queues util)
+ (modules test_lock_queue))
+
+(test
+ (name test_mpmc_queue)
+ (libraries queues util)
+ (modules test_mpmc_queue))
+
 ; (libraries lib core core_bench core_unix.command_unix))
 
 ; (executable
 ;  (name logging)
 ;  (modules logging)
 ;  (libraries logs cmdliner fmt logs.fmt logs.cli fmt.cli fmt.tty))
+
+(env
+ (dev
+  (flags
+   (:standard -w -32))))

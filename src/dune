@@ -11,15 +11,6 @@
    (:standard -w -27-69-37-32))))
 
 (library
- (name fc_generic_domains)
- (modules fc_generic_domains))
-
-(library
- (name fc_generic_threads)
- (libraries threads)
- (modules fc_generic_threads))
-
-(library
  (name fcq_threads)
  (libraries fc_generic_threads)
  (modules fcq_threads))
@@ -28,6 +19,11 @@
  (name fcq_domains)
  (libraries fc_generic_domains)
  (modules fcq_domains))
+
+(library
+ (name queues)
+ ;  (libraries unix)
+ (modules lock_queue mpmc_queue))
 
 ; (executables
 ;  (names main fcq_threads fcq_domains)

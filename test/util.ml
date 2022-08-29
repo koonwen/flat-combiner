@@ -5,7 +5,9 @@ let check_elements lo hi seq =
     | Seq.Cons (hd, t) ->
       if lo <= hd && hd <= hi && not (IntSet.mem hd set)
       then aux (IntSet.add hd set) (t ())
-      else false
+      else (
+        Printf.printf "Repeated value : %d \n" hd;
+        false)
   in
   aux IntSet.empty (seq ())
 ;;

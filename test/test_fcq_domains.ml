@@ -1,7 +1,9 @@
 open Util
 open Fcq_domains
 
-let test_sequential_consistency n =
+let f = open_out "res.txt"
+
+let test_enq_sequential_consistency n =
   let mid = n / 2 in
   let e1 = Domain.spawn (fun () -> enqueuer 1 mid) in
   let e2 = Domain.spawn (fun () -> enqueuer (mid + 1) n) in
@@ -10,6 +12,7 @@ let test_sequential_consistency n =
   (* FC_Queue._q |> Queue.length |> print_int; *)
   (* FC_Queue._q |> Queue.iter (Printf.printf "%d "); *)
   (* Check length of Queue *)
+  (* Queue.length FC_Queue._q |> print_int; *)
   assert (FC_Queue._q |> Queue.length = n);
   (* Check that elements are unique *)
   assert (FC_Queue._q |> Queue.to_seq |> check_elements 1 n);
@@ -34,6 +37,6 @@ let test_deq_sequential_consistency n =
 ;;
 
 let () =
-  test_sequential_consistency 1_000_000;
+  test_enq_sequential_consistency 1_000_000;
   test_deq_sequential_consistency 1_000_000
 ;;

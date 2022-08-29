@@ -14,3 +14,6 @@ main_debug:
 .PHONY:test
 test:
 	dune test
+
+clean:
+	dune clean

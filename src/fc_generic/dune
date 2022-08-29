@@ -1,0 +1,8 @@
+(library
+ (name fc_generic_domains)
+ (modules fc_generic_domains))
+
+(library
+ (name fc_generic_threads)
+ (libraries threads)
+ (modules fc_generic_threads))

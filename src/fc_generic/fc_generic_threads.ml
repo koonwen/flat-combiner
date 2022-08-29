@@ -8,10 +8,10 @@ type 'a publication_record =
 
 type ('a, 'b) t =
   { global_lock : Mutex.t
-  ; count : int
-  ; mutable pub_list : 'a publication_record List.t
+  ; mutable count : int
   ; mutable ds : 'b
       (* We cannot use an array because in 4.12.0+domains+effects, the Thread ID isn't consistent in increasing order. *)
+  ; pub_list : 'a publication_record List.t Atomic.t
   ; thread_records : (Thread.t, 'a publication_record) Hashtbl.t
   }
 
@@ -22,7 +22,7 @@ let init_pub_rec () =
 let create ~data_structure:ds ~num_threads =
   { global_lock = Mutex.create ()
   ; count = 0
-  ; pub_list = []
+  ; pub_list = Atomic.make []
   ; ds
   ; thread_records = Hashtbl.create num_threads
   }
@@ -33,16 +33,19 @@ let rec scan_combine_apply t pr =
   then pr.result
   else if Mutex.try_lock t.global_lock
   then (
+    t.count <- t.count + 1;
     List.iter
       (fun pr ->
         if pr.pending
         then (
           pr.result <- pr.request ();
-          pr.age <- pr.age + 1;
+          pr.age <- t.count;
           pr.pending <- false))
-      t.pub_list;
+      (Atomic.get t.pub_list);
     Mutex.unlock t.global_lock;
-    pr.result)
+    let res = pr.result in
+    pr.result <- None;
+    res)
   else scan_combine_apply t pr
 ;;
 
@@ -56,13 +59,12 @@ let apply t request =
       Hashtbl.add t.thread_records id new_pr;
       new_pr
   in
-  if not pr.active
-  then (
-    t.pub_list <- pr :: t.pub_list;
-    pr.active <- true);
-  pr.result <- None;
   pr.request <- request;
   pr.pending <- true;
+  if not pr.active
+  then (
+    Atomic.set t.pub_list (pr :: Atomic.get t.pub_list);
+    pr.active <- true);
   scan_combine_apply t pr
 ;;
 

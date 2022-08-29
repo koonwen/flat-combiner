@@ -1,31 +1,7 @@
-let check_elements n seq =
-  let module IntSet = Set.Make (Int) in
-  let rec aux set = function
-    | Seq.Nil -> true
-    | Seq.Cons (hd, t) ->
-      if 1 <= hd && hd <= n && not (IntSet.mem hd set)
-      then aux (IntSet.add hd set) (t ())
-      else false
-  in
-  aux IntSet.empty (seq ())
-;;
-
-let check_order n seq =
-  let l, r = 1, n / 2 in
-  let rec aux l r = function
-    | Seq.Nil -> true
-    | Seq.Cons (hd, t) ->
-      if hd >= l && hd >= r
-      then aux l hd (t ())
-      else if hd >= l
-      then aux hd r (t ())
-      else false
-  in
-  aux l r (seq ())
-;;
+open Util
+open Fcq_domains
 
 let test_sequential_consistency n =
-  let open Fcq_domains in
   let mid = n / 2 in
   let e1 = Domain.spawn (fun () -> enqueuer 1 mid) in
   let e2 = Domain.spawn (fun () -> enqueuer (mid + 1) n) in
@@ -35,10 +11,29 @@ let test_sequential_consistency n =
   (* FC_Queue._q |> Queue.iter (Printf.printf "%d "); *)
   (* Check length of Queue *)
   assert (FC_Queue._q |> Queue.length = n);
-  (* Check that elements are consistent *)
-  assert (FC_Queue._q |> Queue.to_seq |> check_elements n);
+  (* Check that elements are unique *)
+  assert (FC_Queue._q |> Queue.to_seq |> check_elements 1 n);
   (* Check sequential consistency *)
   assert (FC_Queue._q |> Queue.to_seq |> check_order n)
 ;;
 
-let () = test_sequential_consistency 1_000_000
+let test_deq_sequential_consistency n =
+  let mid = n / 2 in
+  Queue.clear FC_Queue._q;
+  populate 1 n FC_Queue._q;
+  let d1 = Domain.spawn (fun () -> dequeuer mid) in
+  let d2 = Domain.spawn (fun () -> dequeuer (n - mid)) in
+  let d1_acc = Domain.join d1 in
+  let d2_acc = Domain.join d2 in
+  (* Check length of items dequeued *)
+  assert (List.length d1_acc + List.length d2_acc = n);
+  (* Check that elements are unique *)
+  assert (check_elements 1 n (List.to_seq (d1_acc @ d2_acc)));
+  (* Check sequential consistency *)
+  assert (check_descending d1_acc && check_descending d2_acc)
+;;
+
+let () =
+  test_sequential_consistency 1_000_000;
+  test_deq_sequential_consistency 1_000_000
+;;

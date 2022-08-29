@@ -1,12 +1,21 @@
+(library
+ (name util)
+ (modules util))
+
 (test
  (name test_fcq_threads)
- (modules test_fcq_threads)
- (libraries fcq_threads))
+ (libraries fcq_threads util)
+ (modules test_fcq_threads))
 
 (test
  (name test_fcq_domains)
- (modules test_fcq_domains)
- (libraries fcq_domains))
+ (libraries fcq_domains util)
+ (modules test_fcq_domains))
+
+; (test
+;  (name main)
+;  (libraries alcotest)
+;  (modules main))
 
 ; (libraries lib core core_bench core_unix.command_unix))
 

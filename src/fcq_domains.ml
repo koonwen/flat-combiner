@@ -1,6 +1,7 @@
 module FC_Queue = struct
+  let num_domains = 2
   let _q = Queue.create ()
-  let _fcq = Fc_generic_domains.create ~data_structure:_q ~num_domains:2
+  let _fcq = Fc_generic_domains.create ~data_structure:_q ~num_domains
 
   let enq v =
     match

@@ -1,5 +1,5 @@
 module FC_Queue = struct
-  let num_threads = 4
+  let num_threads = 2
   let _q = Queue.create ()
   let _fcq = Fc_generic_threads.create ~data_structure:_q ~num_threads
 

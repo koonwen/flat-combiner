@@ -10,17 +10,27 @@ module FC_Queue = struct
         None)
     with
     | None -> ()
-    | _ -> failwith "Enq Impossible"
+    | _ -> failwith "enq Impossible"
   ;;
 
   let deq () = Fc_generic_domains.apply _fcq (fun () -> Queue.take_opt _q)
+
+  let clear () =
+    match
+      Fc_generic_domains.apply _fcq (fun () ->
+        Queue.clear _q;
+        None)
+    with
+    | None -> ()
+    | _ -> failwith "clear Impossible"
+  ;;
 end
 
 let rec enqueuer lo hi =
   if lo <= hi
   then (
-    let _id = Domain.self () in
-    FC_Queue.enq lo;
+    let id = Domain.self () in
+    FC_Queue.enq (id, lo);
     enqueuer (lo + 1) hi)
   else ()
 ;;

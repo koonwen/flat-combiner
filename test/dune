@@ -4,17 +4,17 @@
 
 (library
  (name test_fcq_threads)
- (libraries util fcq_threads)
+ (libraries util fcq_threads alcotest)
  (modules test_fcq_threads))
 
 (library
  (name test_fcq_domains)
- (libraries fcq_domains util)
+ (libraries util fcq_domains alcotest)
  (modules test_fcq_domains))
 
 (library
  (name test_lock_queue)
- (libraries queues util)
+ (libraries util queues alcotest)
  (modules test_lock_queue))
 
 (test

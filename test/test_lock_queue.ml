@@ -1,61 +1,41 @@
 open Queues
 open Util
 
-let q = Lock_queue.init ()
-
-let rec enqueuer lo hi =
-  if lo <= hi
-  then (
-    let _id = Domain.self () in
-    Lock_queue.enqueue q lo;
-    enqueuer (lo + 1) hi)
-  else ()
-;;
-
-let dequeuer n =
-  let acc = ref [] in
-  let rec aux n =
-    if n > 0
-    then (
-      (match Lock_queue.dequeue q with
-       | Some v -> acc := v :: !acc
-       | None -> ());
-      aux (n - 1))
-    else ()
-  in
-  aux n;
-  !acc
-;;
-
 let test_enq_sequential_consistency n =
-  let mid = n / 2 in
-  let e1 = Domain.spawn (fun () -> enqueuer 1 mid) in
-  let e2 = Domain.spawn (fun () -> enqueuer (mid + 1) n) in
-  Domain.join e1;
-  Domain.join e2;
+  let num_domains = Domain.recommended_domain_count in
+  let div = n / num_domains in
+  let d_arr = d_spawner (fun () -> Lock_queue.enqueuer 1 div) ~num_domains in
+  Array.iter Domain.join d_arr;
   (* Check length of Queue *)
-  assert (q.queue |> Queue.length = n);
-  (* Check that elements are consistent *)
-  assert (q.queue |> Queue.to_seq |> check_elements 1 n);
+  assert (Lock_queue._q.queue |> Queue.length = n);
+  (* Check that elements are unique *)
+  assert (Lock_queue._q.queue |> Queue.to_seq |> check_elements n num_domains);
   (* Check sequential consistency *)
-  assert (q.queue |> Queue.to_seq |> check_order n);
-  Queue.clear q.queue
+  assert (Lock_queue._q.queue |> Queue.to_seq |> check_order num_domains);
+  Queue.clear Lock_queue._q.queue
 ;;
 
 let test_deq_sequential_consistency n =
-  let mid = n / 2 in
-  populate 1 n q.queue;
-  (* Here we don't need to synchronize on the list because there isn't true parallelism going on. *)
-  let d1 = Domain.spawn (fun () -> dequeuer mid) in
-  let d2 = Domain.spawn (fun () -> dequeuer (n - mid)) in
-  let d1_acc = Domain.join d1 in
-  let d2_acc = Domain.join d2 in
-  (* Check length of items dequeued *)
-  assert (List.length d1_acc + List.length d2_acc = n);
+  let num_domains = Domain.recommended_domain_count in
+  let div = n / num_domains in
+  populate (Domain.self ()) 1 n Lock_queue._q.queue;
+  let d_arr = d_spawner (fun () -> Lock_queue.dequeuer div) ~num_domains in
+  let res_arr = Array.map Domain.join d_arr in
+  let res_seq =
+    Array.fold_left (fun acc l -> Seq.append (List.to_seq l) acc) Seq.empty res_arr
+  in
+  (* Check correct number of elements dequeued *)
+  assert (Seq.length res_seq = n);
   (* Check that elements are unique *)
-  assert (check_elements 1 n (List.to_seq (d1_acc @ d2_acc)));
+  assert (check_elements n 1 res_seq);
   (* Check sequential consistency *)
-  assert (check_descending d1_acc && check_descending d2_acc)
+  assert (Array.for_all check_descending res_arr)
 ;;
 
-(* let () = test_sequential_consistency 1_000_000 *)
+let test_lock_queue_enq n () =
+  Alcotest.(check unit) "Passed" () (test_enq_sequential_consistency n)
+;;
+
+let test_lock_queue_deq n () =
+  Alcotest.(check unit) "Passed" () (test_deq_sequential_consistency n)
+;;

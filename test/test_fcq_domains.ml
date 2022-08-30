@@ -2,37 +2,40 @@ open Util
 open Fcq_domains
 
 let test_enq_sequential_consistency n =
-  let mid = n / 2 in
-  let e1 = Domain.spawn (fun () -> enqueuer 1 mid) in
-  let e2 = Domain.spawn (fun () -> enqueuer (mid + 1) n) in
-  Domain.join e1;
-  Domain.join e2;
+  let num_domains = FC_Queue.num_domains in
+  let div = n / num_domains in
+  let d_arr = d_spawner (fun () -> enqueuer 1 div) ~num_domains in
+  Array.iter Domain.join d_arr;
   (* Check length of Queue *)
   assert (FC_Queue._q |> Queue.length = n);
   (* Check that elements are unique *)
-  assert (FC_Queue._q |> Queue.to_seq |> check_elements 1 n);
+  assert (FC_Queue._q |> Queue.to_seq |> check_elements n num_domains);
   (* Check sequential consistency *)
-  assert (FC_Queue._q |> Queue.to_seq |> check_order n);
+  assert (FC_Queue._q |> Queue.to_seq |> check_order num_domains);
   Queue.clear FC_Queue._q
 ;;
 
 let test_deq_sequential_consistency n =
-  let mid = n / 2 in
-  populate 1 n FC_Queue._q;
-  let d1 = Domain.spawn (fun () -> dequeuer mid) in
-  let d2 = Domain.spawn (fun () -> dequeuer (n - mid)) in
-  let d1_acc = Domain.join d1 in
-  let d2_acc = Domain.join d2 in
-  (* Check length of items dequeued *)
-  assert (List.length d1_acc + List.length d2_acc = n);
+  let num_domains = FC_Queue.num_domains in
+  let div = n / num_domains in
+  populate (Domain.self ()) 1 n FC_Queue._q;
+  let d_arr = d_spawner (fun () -> dequeuer div) ~num_domains in
+  let res_arr = Array.map Domain.join d_arr in
+  let res_seq =
+    Array.fold_left (fun acc l -> Seq.append (List.to_seq l) acc) Seq.empty res_arr
+  in
+  (* Check correct number of elements dequeued *)
+  assert (Seq.length res_seq = n);
   (* Check that elements are unique *)
-  assert (check_elements 1 n (List.to_seq (d1_acc @ d2_acc)));
+  assert (check_elements n 1 res_seq);
   (* Check sequential consistency *)
-  assert (check_descending d1_acc && check_descending d2_acc)
+  assert (Array.for_all check_descending res_arr)
 ;;
 
-(* let () =
-  test_enq_sequential_consistency 1_000_000;
-  test_deq_sequential_consistency 1_000_000
+let test_fcq_domains_enq n () =
+  Alcotest.(check unit) "Passed" () (test_enq_sequential_consistency n)
 ;;
-*)
+
+let test_fcq_domains_deq n () =
+  Alcotest.(check unit) "Passed" () (test_deq_sequential_consistency n)
+;;

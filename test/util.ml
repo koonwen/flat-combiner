@@ -1,29 +1,47 @@
-let check_elements lo hi seq =
-  let module IntSet = Set.Make (Int) in
-  let rec aux set = function
-    | Seq.Nil -> true
-    | Seq.Cons (hd, t) ->
-      if lo <= hd && hd <= hi && not (IntSet.mem hd set)
-      then aux (IntSet.add hd set) (t ())
-      else (
-        Printf.printf "Repeated value : %d \n" hd;
-        false)
+let d_spawner f ~num_domains = Array.init num_domains (fun _ -> Domain.spawn f)
+
+(* Add ppx tests for this *)
+let check_elements n num_domains seq =
+  let div = n / num_domains in
+  let tbl = Hashtbl.create n in
+  let rec aux = function
+    | Seq.Nil ->
+      Hashtbl.fold
+        (fun _ v acc ->
+          if v = num_domains
+          then acc
+          else failwith "[check_elements] elements inconsistent")
+        tbl
+        true
+    | Seq.Cons ((_, hd), t) ->
+      assert (1 <= hd && hd <= div);
+      if Hashtbl.mem tbl hd
+      then (
+        let binding = Hashtbl.find tbl hd in
+        assert (binding <= num_domains);
+        Hashtbl.replace tbl hd (binding + 1))
+      else Hashtbl.add tbl hd 1;
+      aux (t ())
   in
-  aux IntSet.empty (seq ())
+  aux (seq ())
 ;;
 
-let check_order n seq =
-  let l, r = 1, n / 2 in
-  let rec aux l r = function
-    | Seq.Nil -> true
-    | Seq.Cons (hd, t) ->
-      if hd >= l && hd >= r
-      then aux l hd (t ())
-      else if hd >= l
-      then aux hd r (t ())
-      else false
+let check_order num_domains seq =
+  let tbl = Hashtbl.create num_domains in
+  let rec aux = function
+    | Seq.Nil ->
+      assert (Hashtbl.length tbl = num_domains);
+      true
+    | Seq.Cons ((id, hd), t) ->
+      (match Hashtbl.find_opt tbl id with
+       | Some v ->
+         if v + 1 != hd
+         then failwith "[check_order] order not sequential"
+         else Hashtbl.replace tbl id hd
+       | None -> Hashtbl.add tbl id hd);
+      aux (t ())
   in
-  aux l r (seq ())
+  aux (seq ())
 ;;
 
 let rec check_descending = function
@@ -32,9 +50,9 @@ let rec check_descending = function
   | h1 :: h2 :: t -> if h1 >= h2 then check_descending (h2 :: t) else false
 ;;
 
-let rec populate lo hi q =
+let rec populate id lo hi q =
   if lo <= hi
   then (
-    Queue.add lo q;
-    populate (lo + 1) hi q)
+    Queue.add (id, lo) q;
+    populate id (lo + 1) hi q)
 ;;

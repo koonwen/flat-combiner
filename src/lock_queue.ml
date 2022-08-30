@@ -34,3 +34,31 @@ let rec enqueue t item =
 ;;
 
 let dequeue { queue; mutex; _ } = with_mutex mutex (fun () -> Queue.take_opt queue)
+let clear { queue; mutex; _ } = with_mutex mutex (fun () -> Queue.clear queue)
+let _q = init ()
+
+let rec enqueuer lo hi =
+  if lo <= hi
+  then (
+    let id = Domain.self () in
+    enqueue _q (id, lo);
+    enqueuer (lo + 1) hi)
+  else ()
+;;
+
+let dequeuer n =
+  let acc = ref [] in
+  let rec aux n =
+    if n > 0
+    then (
+      (match dequeue _q with
+       | Some v -> acc := v :: !acc
+       | None -> ());
+      aux (n - 1))
+    else ()
+  in
+  aux n;
+  !acc
+;;
+
+let clearer () = clear _q

@@ -1,5 +1,5 @@
 module FC_Queue = struct
-  let num_threads = 2
+  let num_threads = Domain.recommended_domain_count
   let _q = Queue.create ()
   let _fcq = Fc_generic_threads.create ~data_structure:_q ~num_threads
 
@@ -10,10 +10,20 @@ module FC_Queue = struct
         None)
     with
     | None -> ()
-    | _ -> failwith "Enq Impossible"
+    | _ -> failwith "enq Impossible"
   ;;
 
   let deq () = Fc_generic_threads.apply _fcq (fun () -> Queue.take_opt _q)
+
+  let clear () =
+    match
+      Fc_generic_threads.apply _fcq (fun () ->
+        Queue.clear _q;
+        None)
+    with
+    | None -> ()
+    | _ -> failwith "clear Impossible"
+  ;;
 end
 
 (* Comments: 
@@ -24,8 +34,8 @@ end
 let rec enqueuer_v1 i =
   if i > 0
   then (
-    let _id = Thread.self () |> Thread.id in
-    FC_Queue.enq i;
+    let id = Thread.self () |> Thread.id in
+    FC_Queue.enq (id, i);
     enqueuer_v1 (i - 1))
   else ()
 ;;
@@ -42,7 +52,7 @@ let dequeuer_v1 i =
     else ()
   in
   aux i;
-  List.iter (fun v -> Printf.printf "%d " v) !acc;
+  List.iter (fun (_, v) -> Printf.printf "%d " v) !acc;
   print_newline ()
 ;;
 
@@ -62,7 +72,8 @@ let rec enqueuer_v2 lo hi =
   if lo > hi
   then ()
   else (
-    Thread.create FC_Queue.enq lo |> Thread.join;
+    let id = Thread.self () |> Thread.id in
+    Thread.create FC_Queue.enq (id, lo) |> Thread.join;
     enqueuer_v2 (lo + 1) hi)
 ;;
 
@@ -74,7 +85,7 @@ let rec dequeuer_v2 lo hi =
       (fun () ->
         match FC_Queue.deq () with
         | None -> Printf.printf "Empty"
-        | Some v -> Printf.printf "%d " v)
+        | Some (_, v) -> Printf.printf "%d " v)
       ()
     |> Thread.join;
     dequeuer_v2 (lo + 1) hi)
@@ -101,14 +112,15 @@ let prog2 () =
 let rec enqueuer_v3 lo hi =
   if lo <= hi
   then (
-    let _id = Thread.self () |> Thread.id in
-    FC_Queue.enq lo;
+    let id = Thread.self () |> Thread.id in
+    FC_Queue.enq (id, lo);
     Thread.yield ();
     enqueuer_v3 (lo + 1) hi)
 ;;
 
 (** [FC_Queue.dequeuer_v3 n acc] dequeues n values from the queue a concurrent fashion and returns the list of values in right to left order *)
-let dequeuer_v3 n acc =
+let dequeuer_v3 n =
+  let acc = ref [] in
   let rec aux n =
     if n > 0
     then (

@@ -44,5 +44,10 @@ let () =
     ~name:"coarse_lock_enq"
     ~repeat
     (fun () -> test_enq_sequential_consistency Queues.Lock_queue.enqueuer n)
-    Queues.Lock_queue.clearer
+    Queues.Lock_queue.clearer;
+  time
+    ~name:"lockfree_enq"
+    ~repeat
+    (fun () -> test_enq_sequential_consistency Lockfree_queue.enqueuer n)
+    Lockfree_queue.recreate
 ;;

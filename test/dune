@@ -24,7 +24,12 @@
 
 (test
  (name speedtest)
- (libraries benchmark test_fcq_domains test_fcq_threads test_lock_queue)
+ (libraries
+  benchmark
+  test_fcq_domains
+  test_fcq_threads
+  test_lock_queue
+  lockfree_queue)
  (modules speedtest))
 
 ; (test

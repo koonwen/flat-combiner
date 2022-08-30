@@ -25,6 +25,11 @@
  ;  (libraries unix)
  (modules lock_queue mpmc_queue))
 
+(library
+ (name lockfree_queue)
+ (libraries lockfree)
+ (modules lockfree_queue))
+
 ; (executables
 ;  (names main fcq_threads fcq_domains)
 ;  (libraries

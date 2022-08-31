@@ -2,8 +2,8 @@
 build:
 	dune build -w --terminal-persistence=clear-on-rebuild
 
-.PHONY:create
-create:
+.PHONY:switch
+switch:
 	opam switch create . --deps-only
 
 .PHONY:test

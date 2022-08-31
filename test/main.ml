@@ -51,14 +51,8 @@ let coarse_lock_q_tests =
   let open Test_lock_queue in
   Alcotest.(
     ( "Coarse Lock Queue Implementation"
-    , [ test_case
-          "enq sequential consistency slow "
-          `Slow
-          (test_lock_queue_enq long_tests)
-      ; test_case
-          "deq sequential consistency slow "
-          `Slow
-          (test_lock_queue_deq long_tests)
+    , [ test_case "enq sequential consistency slow" `Slow (test_lock_queue_enq long_tests)
+      ; test_case "deq sequential consistency slow" `Slow (test_lock_queue_deq long_tests)
       ; test_case
           "enq sequential consistency quick"
           `Quick
@@ -70,10 +64,37 @@ let coarse_lock_q_tests =
       ] ))
 ;;
 
+let mpmc_queue_tests =
+  let open Test_mpmc_queue in
+  Alcotest.(
+    ( "MPMC Queue Implementation"
+    , [ test_case
+          "enq sequential consistency slow "
+          `Slow
+          (test_mpmc_queue_enq long_tests)
+      ; test_case
+          "deq sequential consistency slow "
+          `Slow
+          (test_mpmc_queue_deq long_tests)
+      ; test_case
+          "enq sequential consistency quick"
+          `Quick
+          (test_mpmc_queue_enq short_tests)
+      ; test_case
+          "deq sequential consistency quick"
+          `Quick
+          (test_mpmc_queue_deq short_tests)
+      ] ))
+;;
+
 (* Run it *)
 let () =
   let open Alcotest in
   run
     "Sequential Consistency Tests"
-    [ fc_threads_queue_tests; fc_domains_queue_tests; coarse_lock_q_tests ]
+    [ fc_threads_queue_tests
+    ; fc_domains_queue_tests
+    ; coarse_lock_q_tests
+    ; mpmc_queue_tests
+    ]
 ;;

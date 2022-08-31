@@ -81,3 +81,34 @@ let _test_1 () =
   Domain.join a |> ignore;
   ()
 ;;
+
+let _q = ref (init ~size_exponent:24 ())
+
+let recreate () =
+  let new_q = init ~size_exponent:24 () in
+  _q := new_q
+;;
+
+let rec enqueuer lo hi =
+  if lo <= hi
+  then (
+    let id = Domain.self () in
+    enqueue !_q (id, lo);
+    enqueuer (lo + 1) hi)
+  else ()
+;;
+
+let dequeuer n =
+  let acc = ref [] in
+  let rec aux n =
+    if n > 0
+    then (
+      (match dequeue !_q with
+       | Some v -> acc := v :: !acc
+       | None -> ());
+      aux (n - 1))
+    else ()
+  in
+  aux n;
+  !acc
+;;

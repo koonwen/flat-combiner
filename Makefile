@@ -1,19 +1,14 @@
-.PHONY = build
+.PHONY:build
 build:
 	dune build -w --terminal-persistence=clear-on-rebuild
 
-main:
-	dune exec -- ./src/main.exe
-
-main_info:
-	dune exec -- ./src/main.exe -v
-
-main_debug:
-	dune exec -- ./src/main.exe -vv
+.PHONY:create
+create:
+	opam switch create . --deps-only
 
 .PHONY:test
 test:
-	dune exec -- test/main.exe
+	dune exec -- test/main.exe test --bail "Implementation" "0-1"
 .PHONY:testq
 testq:
 	dune exec -- test/main.exe -q

@@ -11,18 +11,20 @@ let test_enq_sequential_consistency f n =
   List.iter Domain.join !dom_l
 ;;
 
-let time ~name ~repeat f f' =
-  let t0 = Benchmark.make 0L in
+let time ~name ~repeat f reset =
+  let b_list = ref [] in
   for _ = 1 to Float.to_int repeat do
+    let t0 = Benchmark.make 0L in
     f ();
-    f' ()
+    b_list := Benchmark.sub (Benchmark.make 0L) t0 :: !b_list;
+    reset ()
   done;
-  let b = Benchmark.sub (Benchmark.make 0L) t0 in
+  let collated = List.fold_left Benchmark.add (List.hd !b_list) (List.tl !b_list) in
   Printf.printf
     "(%s): %s --- Average : %f\n"
     name
-    (Benchmark.to_string b)
-    (b.wall /. repeat)
+    (Benchmark.to_string collated)
+    (collated.wall /. repeat)
 ;;
 
 let () =
@@ -46,8 +48,20 @@ let () =
     (fun () -> test_enq_sequential_consistency Queues.Lock_queue.enqueuer n)
     Queues.Lock_queue.clearer;
   time
+    ~name:"mpmc_enq"
+    ~repeat
+    (fun () -> test_enq_sequential_consistency Queues.Mpmc_queue.enqueuer n)
+    Queues.Mpmc_queue.recreate;
+  time
     ~name:"lockfree_enq"
     ~repeat
     (fun () -> test_enq_sequential_consistency Lockfree_queue.enqueuer n)
     Lockfree_queue.recreate
 ;;
+
+(* Comments
+   - How does order of execution change the results? GC and the Heap allocations?
+   - Not sure why this fails on MacOS but works on Fedora
+   - Potential inconsistencies with the tests accounting for differences:
+      - The underlying implementation of both the mpmc queue & lockfree queue uses an array whereas the Stdlib uses a linked list.
+*)

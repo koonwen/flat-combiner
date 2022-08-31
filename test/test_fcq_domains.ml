@@ -11,8 +11,7 @@ let test_enq_sequential_consistency n =
   (* Check that elements are unique *)
   assert (FC_Queue._q |> Queue.to_seq |> check_elements n num_domains);
   (* Check sequential consistency *)
-  assert (FC_Queue._q |> Queue.to_seq |> check_order num_domains);
-  Queue.clear FC_Queue._q
+  assert (FC_Queue._q |> Queue.to_seq |> check_order num_domains)
 ;;
 
 let test_deq_sequential_consistency n =
@@ -33,9 +32,11 @@ let test_deq_sequential_consistency n =
 ;;
 
 let test_fcq_domains_enq n () =
+  Queue.clear FC_Queue._q;
   Alcotest.(check unit) "Passed" () (test_enq_sequential_consistency n)
 ;;
 
 let test_fcq_domains_deq n () =
+  Queue.clear FC_Queue._q;
   Alcotest.(check unit) "Passed" () (test_deq_sequential_consistency n)
 ;;

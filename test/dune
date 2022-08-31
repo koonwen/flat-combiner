@@ -17,9 +17,19 @@
  (libraries util queues alcotest)
  (modules test_lock_queue))
 
+(library
+ (name test_mpmc_queue)
+ (libraries queues util alcotest)
+ (modules test_mpmc_queue))
+
 (test
  (name main)
- (libraries alcotest test_fcq_threads test_fcq_domains test_lock_queue)
+ (libraries
+  alcotest
+  test_fcq_threads
+  test_fcq_domains
+  test_lock_queue
+  test_mpmc_queue)
  (modules main))
 
 (test
@@ -29,13 +39,9 @@
   test_fcq_domains
   test_fcq_threads
   test_lock_queue
+  test_mpmc_queue
   lockfree_queue)
  (modules speedtest))
-
-; (test
-;  (name test_mpmc_queue)
-;  (libraries queues util)
-;  (modules test_mpmc_queue))
 
 ; (libraries lib core core_bench core_unix.command_unix))
 

@@ -4,7 +4,7 @@ build:
 
 .PHONY:switch
 switch:
-	opam switch create . --deps-only
+	opam switch create . 5.0.0~alpha1 --deps-only
 
 .PHONY:test
 test:

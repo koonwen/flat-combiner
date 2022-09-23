@@ -1,67 +1,70 @@
-type 'a publication_record =
-  { mutable active : bool
-  ; mutable request : unit -> 'a Option.t
-  ; mutable result : 'a Option.t
-  ; mutable pending : bool
-  ; mutable age : int
-  }
+type ('ds, 'res) pub_rec = {
+  mutable active : bool;
+  mutable request : 'ds -> 'res;
+  mutable result : 'res Option.t;
+  mutable age : int
+}
 
-type ('a, 'b) t =
-  { global_lock : Mutex.t
-  ; mutable count : int
-  ; mutable ds : 'b
-  ; pub_list : 'a publication_record List.t Atomic.t
-  ; domain_records : (Domain.id, 'a publication_record) Hashtbl.t
-  }
+type ('ds, 'res) t = {
+  global_lock : Mutex.t ; mutable count : int;
+  mutable ds : 'ds;
+  pub_list : ('ds, 'res) pub_rec List.t Atomic.t;
+  domain_records : (('ds, 'res) pub_rec) Domain.DLS.key
+}
 
-let init_pub_rec () =
-  { active = false; request = (fun () -> None); result = None; pending = false; age = 0 }
-;;
+let init_pub_rec () = {
+  active = false;
+  request = (fun () -> None);
+  result = None;
+  age = 0
+}
 
-let create ~data_structure:ds ~num_domains =
-  { global_lock = Mutex.create ()
-  ; count = 0
-  ; pub_list = Atomic.make []
-  ; ds
-  ; domain_records = Hashtbl.create num_domains
-  }
-;;
+let init ~data_structure:ds ~num_domains = {
+  global_lock = Mutex.create ();
+  count = 0;
+  pub_list = Atomic.make [];
+  ds;
+  domain_records = Domain.DLS.new_key (fun () -> init_pub_rec ())
+}
 
 let rec scan_combine_apply t pr =
-  if not pr.pending
-  then pr.result
-  else if Mutex.try_lock t.global_lock
-  then (
-    t.count <- t.count + 1;
-    List.iter
-      (fun pr ->
-        if pr.pending
-        then (
-          pr.result <- pr.request ();
-          pr.age <- t.count;
-          pr.pending <- false))
-      (Atomic.get t.pub_list);
-    Mutex.unlock t.global_lock;
-    let res = pr.result in
-    pr.result <- None;
-    res)
-  else scan_combine_apply t pr
-;;
+  match pr.result with
+  | Some result -> (* if result has been computed, we're done *) result
+  | None ->
+    (* if not yet computed, then spin  *)
+    if not @@ Mutex.try_lock t.global_lock
+    then scan_combine_apply t pr
+    else begin
+      (* otherwise, we're the split combiner *)
+      t.count <- t.count + 1;
+      (* complete all the requests *)
+      List.iter
+        (fun pr ->
+           match pr.result with
+           | None ->
+             pr.result <- Some (pr.request t.ds);
+             pr.age <- t.count;
+           | _ -> ())
+        (Atomic.get t.pub_list);
+      (* done *)
+      Mutex.unlock t.global_lock;
+      (* extract our own domain's own result *)
+      let res = pr.result in
+      pr.result <- None;         (* is this needed? *)
+      Option.get res
+    end
 
 let apply t request =
-  let id = Domain.self () in
-  let pr =
-    try Hashtbl.find t.domain_records id with
-    | Not_found ->
-      let new_pr = init_pub_rec () in
-      Hashtbl.add t.domain_records id new_pr;
-      new_pr
-  in
+  (* retrieve the PR for the current domain *)
+  let pr = Domain.DLS.get t.domain_records in
+  (* write the request to the PR for the domain  *)
   pr.request <- request;
-  pr.pending <- true;
+  pr.result <- None;
+  (* if not active - i.e not in pub list, then add to pub list and set as active *)
   if not pr.active
   then (
-    Atomic.set t.pub_list (pr :: Atomic.get t.pub_list);
+    while not @@ let ls = Atomic.get t.pub_list in Atomic.compare_and_set t.pub_list (pr :: ls) ls do () done;
     pr.active <- true);
+  (* retrieve result *)
   scan_combine_apply t pr
-;;
+

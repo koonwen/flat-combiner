@@ -47,6 +47,29 @@ let fc_domains_queue_tests =
       ] ))
 ;;
 
+let fc_domains_queue_tests =
+  let open Test_fcq_effects in
+  Alcotest.(
+    ( "Flat-combiner Effects Implementation"
+    , [ test_case
+          "enq sequential consistency slow"
+          `Slow
+          (test_fcq_effects_enq long_tests)
+      ; test_case
+          "deq sequential consistency slow"
+          `Slow
+          (test_fcq_effects_deq long_tests)
+      ; test_case
+          "enq sequential consistency quick"
+          `Quick
+          (test_fcq_effects_enq short_tests)
+      ; test_case
+          "deq sequential consistency quick"
+          `Quick
+          (test_fcq_effects_deq short_tests)
+      ] ))
+;;
+
 let coarse_lock_q_tests =
   let open Test_lock_queue in
   Alcotest.(

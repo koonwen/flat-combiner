@@ -6,3 +6,7 @@
  (name fc_generic_threads)
  (libraries threads)
  (modules fc_generic_threads))
+
+(library
+ (name fc_generic_effects)
+ (modules fc_generic_effects))

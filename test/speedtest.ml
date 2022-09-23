@@ -30,7 +30,7 @@ let time ~name ~repeat f reset =
 let () =
   let repeat = 5. in
   let n = 10_000_000 in
-  Printf.printf "Recommended Domain count for machine = %d\n" num_domains;
+  Printf.printf "Running (%d) Domains for the tests\n" num_domains;
   print_endline "Benchmark results:";
   time
     ~name:"fcq_threads_enq"

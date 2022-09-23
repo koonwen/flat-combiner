@@ -21,6 +21,11 @@
  (modules fcq_domains))
 
 (library
+ (name fcq_effects)
+ (libraries fc_generic_effects)
+ (modules fcq_effects))
+
+(library
  (name queues)
  ;  (libraries unix)
  (modules lock_queue mpmc_queue))

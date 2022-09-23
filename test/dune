@@ -13,6 +13,11 @@
  (modules test_fcq_domains))
 
 (library
+ (name test_fcq_effects)
+ (libraries util fcq_effects alcotest)
+ (modules test_fcq_effects))
+
+(library
  (name test_lock_queue)
  (libraries util queues alcotest)
  (modules test_lock_queue))
@@ -28,6 +33,7 @@
   alcotest
   test_fcq_threads
   test_fcq_domains
+  test_fcq_effects
   test_lock_queue
   test_mpmc_queue)
  (modules main))
@@ -42,6 +48,11 @@
   test_mpmc_queue
   lockfree_queue)
  (modules speedtest))
+
+(test
+ (name test)
+ (libraries test_fcq_effects)
+ (modules test))
 
 ; (libraries lib core core_bench core_unix.command_unix))
 

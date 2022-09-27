@@ -1,8 +1,20 @@
+(library
+ (name fc_generic)
+ (modules fc_generic))
+
+; (executable
+;  (name fc)
+;  (libraries domainslib base fmt logs logs.fmt benchmark)
+;  (preprocess
+;   (pps ppx_deriving.show))
+;  (modules fc))
+
 (executable
- (name fc)
- (libraries domainslib base fmt logs logs.fmt)
+ (name fcq)
+ (libraries fc_generic domainslib fmt)
  (preprocess
-  (pps ppx_deriving.show)))
+  (pps ppx_deriving.show))
+ (modules fcq util))
 
 (env
  (dev

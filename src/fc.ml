@@ -1,6 +1,3 @@
-(* Logs.(set_level (Some Debug));
-Logs.set_reporter (Logs_fmt.reporter ~dst:Format.std_formatter ()) *)
-
 let get_domain_id () = (Domain.self () :> int)
 
 type elt = int
@@ -108,10 +105,12 @@ let rec scan_combine_apply t (r : PubRecord.t) =
   else if (* If you hold the lock, you are the combiner *)
           Mutex.try_lock t.lock
   then (
-    (* Fmt.pr "Domain %a Scan_combine_apply" Fmt.int (get_domain_id ()); *)
+    (* Fmt.pr "Domain %a Scan_combine_apply%!\n" Fmt.int (get_domain_id ()); *)
     let pub_list = Atomic.get t.pub_list in
-    (* Fmt.pr "Pub_list %s" (show_pub_list pub_list); *)
+    (* Fmt.pr "[Domain %a] Before:\n" Fmt.int (get_domain_id ());
+    Fmt.pr "Pub_list %s\n\n" (show_pub_list pub_list); *)
     List.iter exec pub_list;
+    (* Fmt.pr "Pub_list %s\n\n" (show_pub_list pub_list); *)
     Mutex.unlock t.lock;
     scan_combine_apply t r)
   else (
@@ -122,16 +121,22 @@ let rec scan_combine_apply t (r : PubRecord.t) =
       (not @@ PubRecord.res_avail r) && !cnt <= 1000
     do
       cnt := !cnt + 1;
-      Domain.cpu_relax () (* Fmt.pr "Domain %a spinning" Fmt.int (get_domain_id ()) *)
+      (* Domain.cpu_relax ()  *)
+      Fmt.pr "Domain %a spinning\n%!" Fmt.int (get_domain_id ())
     done;
     scan_combine_apply t r)
 ;;
 
 let enq t v =
-  (* Fmt.pr "Domain %a Enq %a\n" Fmt.int (get_domain_id ()) Fmt.int v; *)
+  (* Fmt.pr
+    "[Domain %a] enq: curr Q length = %d\n"
+    Fmt.int
+    (get_domain_id ())
+    (t.queue |> Queue.length); *)
+  (* Check if record is active *)
   let pr = PubRecord.self () in
-  (* assert (pr.id = get_domain_id ()); *)
   if not pr.active then publish t pr;
+  (* Create thunk and install into record *)
   let op_thunk = Enq (fun () -> Queue.push v t.queue) in
   PubRecord.update_thunk ~op_thunk;
   let op_res = scan_combine_apply t pr in
@@ -145,7 +150,10 @@ let enq t v =
 ;;
 
 let deq t =
+  (* Check if record is active *)
   let pr = PubRecord.self () in
+  if not pr.active then publish t pr;
+  (* Create thunk and install into record *)
   let op_thunk = Deq (fun () -> Queue.take t.queue) in
   PubRecord.update_thunk ~op_thunk;
   let op_res = scan_combine_apply t pr in
@@ -161,17 +169,17 @@ module IntS = Set.Make (Int)
 
 let enquer fc lo hi =
   for i = lo to hi do
-    (* Fmt.(pr "enquing %a%!" int i); *)
     enq fc i
   done
 ;;
 
 let test_enq fc n =
   let set = IntS.add_seq (fc.queue |> Queue.to_seq) IntS.empty in
+  Printf.printf "%d | %d\n" (Queue.length fc.queue) (IntS.cardinal set);
   (* Fmt.pr "Enqueued: %a\n" pp_int_seq (Queue.to_seq fc.queue); *)
-  assert (IntS.cardinal set != n);
-  assert (IntS.min_elt set != 1);
-  assert (IntS.max_elt set != n)
+  assert (IntS.cardinal set == n);
+  assert (IntS.min_elt set == 1);
+  assert (IntS.max_elt set == n)
 ;;
 
 let dequer fc n =
@@ -194,26 +202,35 @@ let test_multiple_domains fc n =
   let chunk = n / num_domains in
   let d1 = Domain.spawn (fun _ -> enquer fc 1 chunk) in
   let d2 = Domain.spawn (fun _ -> enquer fc (chunk + 1) n) in
-  List.iter Domain.join [ d1; d2 ];
-  Printf.printf "%d\n" (Queue.length fc.queue)
+  List.iter Domain.join [ d1; d2 ]
 ;;
 
-(* let d1 = Domain.spawn (fun _ -> dequer fc chunk) in
-  let d2 = Domain.spawn (fun _ -> dequer fc chunk) in
-  let res1, res2 = Domain.(join d1, join d2) in
-  test_deq (ref (Seq.append !res1 !res2)) n *)
+module T = Domainslib.Task
 
-let main () =
+let async_enquer pool fc lo hi =
+  T.parallel_for ~start:lo ~finish:hi ~body:(fun i -> enq fc i) pool
+;;
+
+let dlib_main () =
+  let pool = T.setup_pool ~num_domains:(Domain.recommended_domain_count - 1) () in
   let fc = create () in
-  let n = 10_000 in
-  (* enquer fc 1 n;
+  let n = 1_000_000 in
+  let t1 = Benchmark.make 0L in
+  T.run pool (fun _ -> async_enquer pool fc 1 n);
+  let res1 = Benchmark.sub (Benchmark.make 0L) t1 in
+  let q = Queue.create () in
+  let t2 = Benchmark.make 0L in
+  for i = 1 to n do
+    Queue.push i q
+  done;
+  let res2 = Benchmark.sub (Benchmark.make 0L) t2 in
+  Printf.printf "(async): %s\n" (Benchmark.to_string res1);
+  Printf.printf "(sync): %s" (Benchmark.to_string res2);
   test_enq fc n;
-  let acc = dequer fc n in
-  test_deq acc n; *)
-  test_multiple_domains fc n
+  T.teardown_pool pool
 ;;
 
-let () = main ()
+let () = dlib_main ()
 (* Printexc.record_backtrace true;
   try main () with
   | e ->

@@ -2,6 +2,15 @@ let d_spawner f ~num_domains = Array.init num_domains (fun _ -> Domain.spawn f)
 let pp_int_int_seq = Fmt.(seq ~sep:semi (pair ~sep:comma int int))
 let pp_int_int_list = Fmt.(list ~sep:semi int)
 
+let length seq =
+  let rec aux acc seq =
+    match seq () with
+    | Seq.Nil -> acc
+    | Seq.Cons (_, t) -> aux (acc + 1) t
+  in
+  aux 0 seq
+;;
+
 (* Add ppx tests for this *)
 let check_unique seq =
   let module IntS = Set.Make (Int) in

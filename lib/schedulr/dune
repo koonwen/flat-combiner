@@ -1,0 +1,4 @@
+(library
+ (name schedulr)
+ (libraries unix dscheck datastructures)
+ )

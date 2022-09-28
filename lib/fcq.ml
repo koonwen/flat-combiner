@@ -9,7 +9,8 @@ let id_gen max =
   aux
 ;;
 
-let num_domains = Domain.recommended_domain_count - 1
+(* let num_domains = Domain.recommended_domain_count - 1 *)
+let num_domains = 7
 let id_gen_7 = id_gen num_domains
 let _q = Queue.create ()
 let _fcq = Fc_generic.create _q
@@ -111,9 +112,9 @@ let pp_int_list = Fmt.(list ~sep:semi int)
 
 let test_enq_sequential_consistency pool n =
   T.run pool (fun () -> para_seq_enq pool 1 num_domains n);
-  let tbl = Util.distribute num_domains (_q |> Queue.to_seq) in
+  (* let tbl = Util.distribute num_domains (_q |> Queue.to_seq) in
   Hashtbl.iter (fun key v -> Fmt.pr "(Domain %d)\n\n%a\n\n" key pp_int_list v) tbl;
-  Fmt.(pr "%a\n" pp_int_int_queue _q);
+  Fmt.(pr "%a\n" pp_int_int_queue _q); *)
   (* Check length of Queue *)
   assert (_q |> Queue.length = n * num_domains);
   (* Check that elements are unique *)
@@ -125,11 +126,12 @@ let test_enq_sequential_consistency pool n =
 let test_deq_sequential_consistency pool n =
   Util.populate (get_domain_id ()) 1 n _q;
   let res_seq = T.run pool (fun () -> para_deq pool 1 n) |> List.to_seq in
-  let tbl = Util.distribute num_domains res_seq in
+  (* let tbl = Util.distribute num_domains res_seq in
   Hashtbl.iter (fun key v -> Fmt.pr "(Domain %d)\n\n%a\n\n" key pp_int_list v) tbl;
-  Fmt.(pr "%a\n" pp_int_int_seq res_seq);
+  Fmt.(pr "%a\n" pp_int_int_seq res_seq); *)
   (* Check correct number of elements dequeued *)
-  assert (Seq.length res_seq = n);
+  (* assert (Seq.length res_seq = n); *)
+  assert (Util.length res_seq = n);
   (* Check that elements are unique *)
   assert (Util.check_unique res_seq);
   (* Check sequential consistency *)
@@ -137,9 +139,10 @@ let test_deq_sequential_consistency pool n =
 ;;
 
 let () =
-  let pool = T.setup_pool ~num_domains () in
-  let n = 100 in
-  (* test_enq_sequential_consistency pool n; *)
+  let pool = T.setup_pool ~num_additional_domains:num_domains () in
+  let n = 1_000_000 in
+  test_enq_sequential_consistency pool n;
+  clear ~id:0 ();
   test_deq_sequential_consistency pool n;
   T.teardown_pool pool
 ;;

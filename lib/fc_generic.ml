@@ -1,13 +1,3 @@
-(* let id_gen =
-  let internal_state = ref 0 in
-  let aux () =
-    let id = !internal_state in
-    incr internal_state;
-    id
-  in
-  aux
-;; *)
-
 type 'a publication_record =
   { mutable active : bool
   ; mutable request : unit -> 'a Option.t
@@ -30,7 +20,8 @@ let init_pub_rec () =
   { active = false; request = (fun () -> None); result = None; pending = false; age = 0 }
 ;;
 
-let create ?(tasks = Domain.recommended_domain_count) ds =
+(* let create ?(tasks = Domain.recommended_domain_count) ds = *)
+let create ?(tasks = 8) ds =
   { global_lock = Mutex.create ()
   ; count = 0
   ; pub_list = Atomic.make []

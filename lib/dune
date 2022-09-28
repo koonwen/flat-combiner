@@ -1,3 +1,5 @@
+(vendored_dirs ./ebsl)
+
 (library
  (name fc_generic)
  (modules fc_generic))
@@ -11,12 +13,17 @@
 
 (executable
  (name fcq)
- (libraries fc_generic domainslib fmt)
+ (libraries fc_generic domainslib fmt schedulr)
  (preprocess
   (pps ppx_deriving.show))
  (modules fcq util))
 
+(executable
+ (name scheduler)
+ (libraries fc_generic domainslib fmt schedulr)
+ (modules scheduler))
+
 (env
  (dev
   (flags
-   (:standard -w -32))))
+   (:standard -w -32-67))))

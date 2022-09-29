@@ -1,6 +1,7 @@
 let d_spawner f ~num_domains = Array.init num_domains (fun _ -> Domain.spawn f)
-let pp_int_int_seq = Fmt.(seq ~sep:semi (pair ~sep:comma int int))
-let pp_int_int_list = Fmt.(list ~sep:semi int)
+let pp_int_int_queue = Fmt.(queue ~sep:semi (parens (pair ~sep:comma int int)))
+let pp_int_int_seq = Fmt.(seq ~sep:semi (parens (pair ~sep:comma int int)))
+let pp_int_list = Fmt.(list ~sep:semi int)
 
 let length seq =
   let rec aux acc seq =

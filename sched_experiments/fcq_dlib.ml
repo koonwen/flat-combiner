@@ -1,66 +1,4 @@
-let id_gen max =
-  let internal_state = ref 0 in
-  let aux () =
-    let id = !internal_state in
-    incr internal_state;
-    if !internal_state >= max then internal_state := 0;
-    id
-  in
-  aux
-;;
-
-(* let num_domains = Domain.recommended_domain_count - 1 *)
-let num_domains = 7
-let id_gen_7 = id_gen num_domains
-let _q = Queue.create ()
-let _fcq = Fc_generic.create _q
-let get_domain_id () = (Domain.self () :> int)
-
-let enq ?(id = id_gen_7 ()) v =
-  match
-    Fc_generic.apply id _fcq (fun () ->
-      Queue.push v _q;
-      None)
-  with
-  | None -> ()
-  | _ -> failwith "enq Impossible"
-;;
-
-let deq ?(id = id_gen_7 ()) () = Fc_generic.apply id _fcq (fun () -> Queue.take_opt _q)
-
-let clear ?(id = id_gen_7 ()) () =
-  match
-    Fc_generic.apply id _fcq (fun () ->
-      Queue.clear _q;
-      None)
-  with
-  | None -> ()
-  | _ -> failwith "clear Impossible"
-;;
-
-let rec enqueuer ?(id = id_gen_7 ()) lo hi =
-  if lo <= hi
-  then (
-    enq ~id (id, lo);
-    enqueuer ~id (lo + 1) hi)
-  else ()
-;;
-
-(* let dequeuer ?(id = id_gen_7 ()) n =
-  let acc = ref [] in
-  let rec aux n =
-    if n > 0
-    then (
-      (match deq ~id () with
-       | Some v -> acc := v :: !acc
-       | None -> ());
-      aux (n - 1))
-    else ()
-  in
-  aux n;
-  !acc
-;; *)
-
+(* open Fcq
 module T = Domainslib.Task
 
 (* This enqueuer runs in any order, we may not test for sequential consistency *)
@@ -145,4 +83,4 @@ let () =
   clear ~id:0 ();
   test_deq_sequential_consistency pool n;
   T.teardown_pool pool
-;;
+;; *)

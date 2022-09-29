@@ -47,10 +47,14 @@ To set up and install the dependencies for this library in a local switch
 ```
 make switch
 ```
-
 ## Commands
+(For flat_combiner directory)
 - `make test` (Testing sequential consistency of queues)
 - `make testq` (Run sequential consistency tests for smaller input for quick results
 - `make speedtest` (Benchmarking enques between queues.)
 
 
+# Notice
+- Much of the code in the `sched_experiments` directory is not written by me, it is taken from https://github.com/bartoszmodelski/ebsl great work
+- `flat_combiner` directory holds most of the FC implementations that uses the 5.0.0~alpha1 switch which is incompatible with the scheduler library that we rely on.
+- `sched_experiments` uses the 4.12.0+domains switch and runs tests on the FC to see if we have performance gains from using different schedulers.

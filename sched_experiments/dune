@@ -2,16 +2,12 @@
 
 (library
  (name fc_generic)
+ (libraries fmt)
+ (preprocess
+  (pps ppx_deriving.show))
  (modules fc_generic))
 
-; (executable
-;  (name fc)
-;  (libraries domainslib base fmt logs logs.fmt benchmark)
-;  (preprocess
-;   (pps ppx_deriving.show))
-;  (modules fc))
-
-(executable
+(library
  (name fcq)
  (libraries fc_generic domainslib fmt schedulr)
  (preprocess
@@ -19,9 +15,19 @@
  (modules fcq util))
 
 (executable
+ (name fcq_dlib)
+ (libraries fcq)
+ (modules fcq_dlib))
+
+(executable
  (name scheduler)
  (libraries fc_generic domainslib fmt schedulr)
  (modules scheduler))
+
+(tests
+ (names lifo fifo hybrid baseline)
+ (libraries schedulr fcq benchmark)
+ (modules lifo fifo hybrid baseline))
 
 (env
  (dev

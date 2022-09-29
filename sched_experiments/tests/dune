@@ -1,0 +1,8 @@
+(tests
+ (names fifo lifo hybrid)
+ (libraries schedulr fcq))
+
+(env
+ (dev
+  (flags
+   (:standard -w -32-67))))

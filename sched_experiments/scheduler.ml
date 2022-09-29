@@ -1,11 +1,3 @@
-module type S = sig
-  open Schedulr
-
-  val await : 'a Promise.t -> 'a
-  val schedule : (unit -> 'a) -> 'a Promise.t
-  val yield : unit -> unit
-end
-
 let rec fib n = if n = 0 then 0 else if n = 1 then 1 else fib (n - 1) + fib (n - 2)
 
 let rec fib_para n =
@@ -32,9 +24,3 @@ let () =
       Stdlib.exit 0)
     |> ignore)
 ;;
-(* let res1 = Schedulr.Scheduler.schedule expensive_para_comp in
-        let res2 = Schedulr.Scheduler.schedule expensive_para_comp in
-        let results = List.map Schedulr.Scheduler.await [ res1; res2 ] in
-        Fmt.(pr "%a\n" (list ~sep:comma int) results);
-        Stdlib.exit 0)
-      |> ignore) *)

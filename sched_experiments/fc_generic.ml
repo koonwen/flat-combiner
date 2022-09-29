@@ -1,17 +1,18 @@
-type 'a publication_record =
-  { mutable active : bool
-  ; mutable request : unit -> 'a Option.t
-  ; mutable result : 'a Option.t
+type publication_record =
+  { mutable active : bool (* ; mutable request : unit -> 'a option *)
+  ; mutable request : unit -> (int * int) option (* ; mutable result : 'a option *)
+  ; mutable result : (int * int) option
   ; mutable pending : bool
   ; mutable age : int
   }
+[@@deriving show]
 
 type ('a, 'b) t =
   { global_lock : Mutex.t
   ; mutable count : int
   ; mutable ds : 'b
-  ; pub_list : 'a publication_record List.t Atomic.t
-  ; task_records : (int, 'a publication_record) Hashtbl.t
+  ; pub_list : publication_record List.t Atomic.t
+  ; task_records : (int, publication_record) Hashtbl.t
       (* This may increase indefinetly to accomodate n tasks *)
       (* Optimize this by making sure each id for a task is kept in a Domain Local array *)
   }
@@ -30,6 +31,8 @@ let create ?(tasks = 8) ds =
   }
 ;;
 
+(* let pp p x = Format.pp_print_string p (show x) *)
+
 let rec scan_combine_apply id t pr =
   (* Printf.printf "publist_length = %d%!" (List.length (t.pub_list |> Atomic.get)); *)
   if not pr.pending
@@ -43,11 +46,12 @@ let rec scan_combine_apply id t pr =
         if pr.pending
         then (
           (* print_endline "Exec"; *)
+          (* Printf.printf "%s\n" (show_publication_record pr); *)
           pr.result <- pr.request ();
           pr.age <- t.count;
           pr.pending <- false))
       (Atomic.get t.pub_list);
-    (* print_newline (); *)
+    (* Printf.printf "\n\n\n"; *)
     Mutex.unlock t.global_lock;
     let res = pr.result in
     pr.result <- None;

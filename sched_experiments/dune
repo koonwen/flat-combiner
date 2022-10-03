@@ -2,7 +2,7 @@
 
 (library
  (name fc_generic)
- (libraries fmt)
+ (libraries fmt schedulr)
  (preprocess
   (pps ppx_deriving.show))
  (modules fc_generic))

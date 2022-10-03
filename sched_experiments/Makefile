@@ -8,7 +8,7 @@ test_sc:
 
 .PHONY=test_speed
 test_speed :
-	hyperfine --warmup=2 ../_build/default/lib/baseline.exe 
-	hyperfine --warmup=2 ../_build/default/lib/hybrid.exe
-	hyperfine --warmup=2 ../_build/default/lib/lifo.exe
-	hyperfine --warmup=2 ../_build/default/lib/fifo.exe
+	hyperfine --warmup=2 ../_build/default/sched_experiments/baseline.exe 
+	hyperfine --warmup=2 ../_build/default/sched_experiments/hybrid.exe
+	hyperfine --warmup=2 ../_build/default/sched_experiments/lifo.exe
+	hyperfine --warmup=2 ../_build/default/sched_experiments/fifo.exe

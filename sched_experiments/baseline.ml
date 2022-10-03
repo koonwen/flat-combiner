@@ -38,12 +38,12 @@ let rec enqueue t item =
 let dequeue { queue; mutex; _ } = with_mutex mutex (fun () -> Queue.take_opt queue)
 
 let () =
-  let n = 1_000_000 in
+  let n = 100_000 in
   let q = init () in
   let pool = T.setup_pool ~num_additional_domains:7 () in
   T.run pool (fun _ ->
-    let threads = Array.make 10 (T.async pool (fun () -> ())) in
-    for i = 0 to 9 do
+    let threads = Array.make 24 (T.async pool (fun () -> ())) in
+    for i = 0 to 23 do
       threads.(i)
         <- T.async pool (fun () ->
              for i = 0 to n do

@@ -39,7 +39,12 @@ let rec scan_combine_apply id t pr =
   then pr.result
   else if Mutex.try_lock t.global_lock
   then (
+    (* The task needs to return to the same domain *)
     (* Printf.printf "(%d) Combiner\n%!" id; *)
+    let domain_id1 = (Domain.self () :> int) in
+    Schedulr.Scheduler.yield ~lock_holding:true ();
+    let domain_id2 = (Domain.self () :> int) in
+    assert (domain_id1 = domain_id2);
     t.count <- t.count + 1;
     List.iter
       (fun pr ->
@@ -51,7 +56,6 @@ let rec scan_combine_apply id t pr =
           pr.age <- t.count;
           pr.pending <- false))
       (Atomic.get t.pub_list);
-    (* Printf.printf "\n\n\n"; *)
     Mutex.unlock t.global_lock;
     let res = pr.result in
     pr.result <- None;
@@ -59,7 +63,7 @@ let rec scan_combine_apply id t pr =
   else (
     let cnt = ref 0 in
     while pr.pending && !cnt <= 1000 do
-      (* Printf.printf "Spinning\n%!"; *)
+      Schedulr.Scheduler.yield ();
       Domain.cpu_relax ();
       incr cnt
     done;

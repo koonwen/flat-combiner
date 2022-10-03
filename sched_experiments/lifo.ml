@@ -1,14 +1,14 @@
 open Schedulr
 
 module T = struct
-  let num_threads = 10
+  let num_threads = 24
   let pool = Array.make num_threads (Promise.empty ())
 end
 
 module FC = Fcq.Make (T)
 
 let testing_function () =
-  let n = 1_000_000 in
+  let n = 10_000 in
   for i = 0 to T.num_threads - 1 do
     T.pool.(i) <- Scheduler.schedule (fun _ -> FC.enqueuer ~id:i 1 n)
   done;

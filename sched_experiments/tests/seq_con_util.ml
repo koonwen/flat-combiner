@@ -1,11 +1,11 @@
 open Schedulr
 open Fcq
 
-let n = 1_000_000
+let n = 100_00
 let num_domains = 7
 
 module T = struct
-  let num_threads = 10
+  let num_threads = 100
   let pool = Array.make num_threads (Promise.empty ())
 end
 

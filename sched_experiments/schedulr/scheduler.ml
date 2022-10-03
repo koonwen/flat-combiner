@@ -353,50 +353,52 @@ module Make (DS : DataStructure) = struct
     | `Steal id_type -> steal ~context ~id_type
   ;;
 
-  let rec run_domain ?(count = 0) () =
-    (* How often to give priority to the lock holding thread. -1 is absolute priority *)
-    let lock_frequency = 100 in
+  let rec run_domain () =
+    (* How often to give priority to the lock holding thread. 0-100. 
+       100 is full priority *)
+    let lock_likelihood = 50 in
+    let try_get_locked_task () =
+      with_processor (fun processor ->
+        let ({ locked_tasks; _ } : Processor.t) = processor in
+        Queue.take_opt locked_tasks)
+    in
     let run scheduled =
       match Task.get scheduled with
       | New task -> with_effects_handler task
       | Preempted task -> continue task ()
     in
-    with_context (fun context ->
-      let ({ processor; _ } : Context.t) = context in
-      let check_locked () =
-        let scheduled = Queue.take processor.locked_tasks in
-        run scheduled;
-        run_domain ~count:0 ()
-      in
-      if count > lock_frequency && Queue.length processor.locked_tasks > 0
-      then check_locked ()
-      else (
-        let scheduled =
-          let task_ds = Processor.ds processor in
-          match DS.local_remove task_ds with
-          | Some task -> task
-          | None ->
-            let i = ref 0 in
-            let rec loop () =
-              let task = ref None in
-              while Option.is_none !task && !i < 1000 do
-                incr i;
-                find_work ~context;
-                task := DS.local_remove task_ds
-              done;
-              if !task |> Option.is_some
-              then !task
-              else if Queue.length processor.locked_tasks > 0
-              then Some (Queue.take processor.locked_tasks)
-              else loop ()
-            in
-            let task = loop () in
-            (match task with
-             | None -> assert false
-             | Some task -> task)
-        in
-        run scheduled;
-        run_domain ~count:(count + 1) ()))
+    let get_task_from_ds () =
+      with_context (fun context ->
+        let ({ processor; _ } : Context.t) = context in
+        let task_ds = Processor.ds processor in
+        match DS.local_remove task_ds with
+        | Some task -> task
+        | None ->
+          let task = ref None in
+          while Option.is_none !task do
+            find_work ~context;
+            match DS.local_remove task_ds with
+            | Some _ as t -> task := t
+            | None ->
+              let chance = Random.int 100 in
+              if chance < lock_likelihood then task := try_get_locked_task ()
+          done;
+          (match !task with
+           | None -> assert false
+           | Some task -> task))
+    in
+    (* let chance = Random.int 100 in
+    let scheduled =
+      if chance < lock_likelihood
+      then (
+        match try_get_locked_task () with
+        | Some t -> t
+        | None -> get_task_from_ds ())
+      else get_task_from_ds ()
+    in *)
+    let scheduled = get_task_from_ds () in
+    run scheduled;
+    run_domain ()
   ;;
 
   let setup_domain context () =

@@ -1,7 +1,7 @@
 open Schedulr
 open Fcq
 
-let n = 100_00
+let n = 10_000
 let num_domains = 7
 
 module T = struct

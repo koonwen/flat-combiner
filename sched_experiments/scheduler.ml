@@ -17,7 +17,7 @@ let expensive_comp () = fib 45
 let expensive_para_comp () = fib_para 45
 
 let () =
-  expensive_comp () |> Printf.printf "%d\n%!";
+  (* expensive_comp () |> Printf.printf "%d\n%!"; *)
   Schedulr.Instance.LIFO.(
     init 7 ~f:(fun _ ->
       Printf.printf "%d%!\n" (expensive_para_comp ());

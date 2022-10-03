@@ -12,3 +12,8 @@ test_speed :
 	hyperfine --warmup=2 ../_build/default/sched_experiments/hybrid.exe
 	hyperfine --warmup=2 ../_build/default/sched_experiments/lifo.exe
 	hyperfine --warmup=2 ../_build/default/sched_experiments/fifo.exe
+
+.PHONY=testp
+testp :
+	dune build
+	hyperfine --warmup=2 ../_build/default/sched_experiments/tests/fifo.exe

@@ -41,10 +41,6 @@ let rec scan_combine_apply id t pr =
   then (
     (* The task needs to return to the same domain *)
     (* Printf.printf "(%d) Combiner\n%!" id; *)
-    let domain_id1 = (Domain.self () :> int) in
-    Schedulr.Scheduler.yield ~lock_holding:true ();
-    let domain_id2 = (Domain.self () :> int) in
-    assert (domain_id1 = domain_id2);
     t.count <- t.count + 1;
     List.iter
       (fun pr ->
@@ -52,6 +48,10 @@ let rec scan_combine_apply id t pr =
         then (
           (* print_endline "Exec"; *)
           (* Printf.printf "%s\n" (show_publication_record pr); *)
+          let domain_id1 = (Domain.self () :> int) in
+          Schedulr.Scheduler.yield ~lock_holding:true ();
+          let domain_id2 = (Domain.self () :> int) in
+          assert (domain_id1 = domain_id2);
           pr.result <- pr.request ();
           pr.age <- t.count;
           pr.pending <- false))
